@@ -99,7 +99,7 @@ import no.nordicsemi.android.error.GattError;
 public abstract class DfuBaseService extends IntentService implements DfuProgressInfo.ProgressListener {
 	private static final String TAG = "DfuBaseService";
 
-	/* package */ static boolean DEBUG = false;
+	/* package */ static boolean DEBUG = true;
 
 	public static final int NOTIFICATION_ID = 283; // a random number
 	public static final String NOTIFICATION_CHANNEL_DFU = "dfu";
@@ -1033,7 +1033,7 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 		super.onCreate();
 
 		DEBUG = isDebug();
-		logi("DFU service created. Version: " + BuildConfig.VERSION_NAME);
+		logi("DFU service created.");
 		initialize();
 
 		final LocalBroadcastManager manager = LocalBroadcastManager.getInstance(this);

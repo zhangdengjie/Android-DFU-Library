@@ -70,7 +70,7 @@ import no.nordicsemi.android.error.LegacyDfuError;
 	private static final int OP_CODE_RESPONSE_CODE_KEY = 0x10; // 16
 	private static final int OP_CODE_PACKET_RECEIPT_NOTIF_KEY = 0x11; // 17
 	private static final byte[] OP_CODE_START_DFU = new byte[]{OP_CODE_START_DFU_KEY, 0x00};
-	private static final byte[] OP_CODE_START_DFU_V1 = new byte[]{OP_CODE_START_DFU_KEY};
+	private static final byte[] OP_CODE_START_DFU_V1 = new byte[]{OP_CODE_START_DFU_KEY,0x00};
 	private static final byte[] OP_CODE_INIT_DFU_PARAMS = new byte[]{OP_CODE_INIT_DFU_PARAMS_KEY}; // SDK 6.0.0 or older
 	private static final byte[] OP_CODE_INIT_DFU_PARAMS_START = new byte[]{OP_CODE_INIT_DFU_PARAMS_KEY, 0x00};
 	private static final byte[] OP_CODE_INIT_DFU_PARAMS_COMPLETE = new byte[]{OP_CODE_INIT_DFU_PARAMS_KEY, 0x01};
