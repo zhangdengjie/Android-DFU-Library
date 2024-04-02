@@ -48,7 +48,7 @@ import no.nordicsemi.android.dfu.internal.exception.UploadAbortedException;
 	/**
 	 * Flag indicating whether the init packet has been already transferred or not.
 	 */
-	private boolean mInitPacketInProgress;
+	protected boolean mInitPacketInProgress;
 	/**
 	 * Flag indicating whether the firmware is being transmitted or not.
 	 */
@@ -112,9 +112,11 @@ import no.nordicsemi.android.dfu.internal.exception.UploadAbortedException;
 					if (mInitPacketInProgress) {
 						// We've got confirmation that the init packet was sent
 						mService.sendLogBroadcast(DfuBaseService.LOG_LEVEL_INFO, "Data written to " + uuid);
+						logi("数据已经写入 " + uuid);
 						mInitPacketInProgress = false;
 					} else if (mFirmwareUploadInProgress) {
 						mPacketsSentSinceNotification++;
+						logi("数据已经写入 " + uuid + " mPacketsSentSinceNotification " + mPacketsSentSinceNotification);
 
 						final boolean notificationExpected = mPacketsBeforeNotification > 0 && mPacketsSentSinceNotification >= mPacketsBeforeNotification;
 						final boolean lastPacketTransferred = mProgressInfo.isComplete();
@@ -167,6 +169,7 @@ import no.nordicsemi.android.dfu.internal.exception.UploadAbortedException;
 					// If the CONTROL POINT characteristic was written just set the flag to true.
 					// The main thread will continue its task when notified.
 					mService.sendLogBroadcast(DfuBaseService.LOG_LEVEL_INFO, "Data written to " + uuid);
+					logi("Data written to " + uuid);
 					mRequestCompleted = true;
 				}
 			} else {
@@ -321,7 +324,7 @@ import no.nordicsemi.android.dfu.internal.exception.UploadAbortedException;
 	 * @throws DfuException                Thrown if DFU error occur.
 	 * @throws UploadAbortedException      Thrown if DFU operation was aborted by user.
 	 */
-	private void writeInitPacket(final BluetoothGattCharacteristic characteristic, final byte[] buffer, final int size)
+	protected void writeInitPacket(final BluetoothGattCharacteristic characteristic, final byte[] buffer, final int size)
 			throws DeviceDisconnectedException, DfuException, UploadAbortedException {
 		if (mAborted)
 			throw new UploadAbortedException();
@@ -382,6 +385,7 @@ import no.nordicsemi.android.dfu.internal.exception.UploadAbortedException;
 		mPacketsSentSinceNotification = 0;
 
 		try {
+			mFirmwareStream.reset();
 			final int available = mProgressInfo.getAvailableObjectSizeIsBytes();
 			byte[] buffer = mBuffer;
 			if (available < buffer.length)
@@ -389,6 +393,7 @@ import no.nordicsemi.android.dfu.internal.exception.UploadAbortedException;
 			final int size = mFirmwareStream.read(buffer);
 			mService.sendLogBroadcast(DfuBaseService.LOG_LEVEL_VERBOSE,
                     "Sending firmware to characteristic " + packetCharacteristic.getUuid() + "...");
+			logi("Sending firmware to characteristic " + packetCharacteristic.getUuid() + "...");
 			writePacket(mGatt, packetCharacteristic, buffer, size);
 		} catch (final HexFileValidationException e) {
 			throw new DfuException("HEX file not valid", DfuBaseService.ERROR_FILE_INVALID);

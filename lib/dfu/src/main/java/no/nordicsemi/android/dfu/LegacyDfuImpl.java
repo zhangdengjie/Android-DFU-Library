@@ -30,9 +30,17 @@ import android.bluetooth.BluetoothGattService;
 import android.content.Intent;
 import android.os.Build;
 import android.os.SystemClock;
+import android.util.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -442,6 +450,29 @@ import no.nordicsemi.android.error.LegacyDfuError;
 				mService.sendLogBroadcast(DfuBaseService.LOG_LEVEL_APPLICATION, "Response received (Op Code = " + response[1] + ", Status = " + status + ")");
 				if (status != DFU_STATUS_SUCCESS)
 					throw new RemoteDfuException("Device returned error after sending init packet", status);
+			} else {
+				// ADD: 2024/4/2 zhangdengjie 兼容senseu baby自定义升级方式
+				logi("Sending the Initialize DFU Parameters START (Op Code = 2, Value = 0)");
+				writeOpCode(mControlPointCharacteristic, OP_CODE_INIT_DFU_PARAMS_START);
+				try {
+					getCrc16(mFirmwareStream);
+					byte[] data = new byte[20];
+					data[0] = (byte) crc_value;
+					data[1] = (byte) (crc_value >> 8);
+					data[2] = 0x00;
+					data[3] = 0x00;
+					logi("Sending 4 bytes of init packet");
+					writeInitPacket(mPacketCharacteristic, data, 4);
+					logi("Sending the Initialize DFU Parameters COMPLETE (Op Code = 2, Value = 1)");
+					writeOpCode(mControlPointCharacteristic, OP_CODE_INIT_DFU_PARAMS_COMPLETE);
+				} catch (final Exception e) {
+					loge("Error while reading Init packet file");
+					throw new DfuException(e.getMessage(), DfuBaseService.ERROR_CRC_ERROR);
+				}
+				response = readNotificationResponse();
+				status = getStatusCode(response, OP_CODE_INIT_DFU_PARAMS_KEY);
+				if (status != DFU_STATUS_SUCCESS)
+					throw new RemoteDfuException("Device returned error after sending init packet", status);
 			}
 
 			// Send the number of packets of firmware before receiving a receipt notification
@@ -764,5 +795,32 @@ import no.nordicsemi.android.error.LegacyDfuError;
 		final Intent newIntent = new Intent();
 		newIntent.fillIn(intent, Intent.FILL_IN_COMPONENT | Intent.FILL_IN_PACKAGE);
 		restartService(newIntent, false);
+	}
+
+
+	private static int crc_value = 0xffff;
+	private static int size = 0;
+
+	private void getCrc16(InputStream fileInputStream) throws IOException {
+		crc_value = 0xffff;
+		byte[] buff = new byte[1024];
+		int rc;
+		while ((rc = fileInputStream.read(buff, 0, 1024)) > 0) {
+			crc16_compute(buff, rc);
+		}
+		size = rc;
+	}
+
+	private static void crc16_compute(byte[] p_data, int size) {
+		int i;
+		int crc = crc_value;
+		for (i = 0; i < size; i++) {
+			crc = ((crc >> 8) & 0xff) | (crc << 8);
+			crc ^= ((int) p_data[i]) & 0xff;
+			crc ^= (crc & 0xff) >> 4 & 0xffff;
+			crc ^= (crc << 8) << 4;
+			crc ^= ((crc & 0xff) << 4) << 1;
+		}
+		crc_value = (crc & 0xffff);
 	}
 }

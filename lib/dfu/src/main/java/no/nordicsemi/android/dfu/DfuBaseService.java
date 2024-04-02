@@ -55,6 +55,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -1465,12 +1466,26 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 	 */
 	private InputStream openInputStream(@NonNull final String filePath, final String mimeType, final int mbrSize, final int types)
 			throws IOException {
-		final InputStream is = new FileInputStream(filePath);
+		InputStream is = new FileInputStream(filePath);
 		if (MIME_TYPE_ZIP.equals(mimeType))
 			return new ArchiveInputStream(is, mbrSize, types);
 		if (filePath.toLowerCase(Locale.US).endsWith("hex"))
 			return new HexInputStream(is, mbrSize);
-		return is;
+		InputStream inputStream = cloneInputStream(is);
+		is.close();
+		is = null;
+		return inputStream;
+	}
+
+	private static InputStream cloneInputStream(InputStream inputStream) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = inputStream.read(buffer)) > -1) {
+			baos.write(buffer, 0, len);
+		}
+		baos.flush();
+		return new ByteArrayInputStream(baos.toByteArray());
 	}
 
 	/**
@@ -2079,12 +2094,12 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 	}
 
 	private void logw(final String message) {
-		if (DfuBaseService.DEBUG)
+//		if (DfuBaseService.DEBUG)
 			Log.w(TAG, message);
 	}
 
 	private void logi(final String message) {
-		if (DfuBaseService.DEBUG)
+//		if (DfuBaseService.DEBUG)
 			Log.i(TAG, message);
 	}
 }

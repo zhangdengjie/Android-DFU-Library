@@ -866,12 +866,12 @@ import no.nordicsemi.android.dfu.internal.scanner.BootloaderScannerFactory;
 	}
 
 	void logw(final String message) {
-		if (DfuBaseService.DEBUG)
+//		if (DfuBaseService.DEBUG)
 			Log.w(TAG, message);
 	}
 
 	void logi(final String message) {
-		if (DfuBaseService.DEBUG)
+//		if (DfuBaseService.DEBUG)
 			Log.i(TAG, message);
 	}
 }
